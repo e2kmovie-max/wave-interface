@@ -62,19 +62,48 @@ export function CreateRoomForm({ strings }: { strings?: CreateRoomFormStrings } 
   return (
     <form
       onSubmit={onSubmit}
-      className="mx-auto flex w-full max-w-2xl flex-col gap-3 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)]/70 p-3 shadow-2xl shadow-black/20 backdrop-blur md:flex-row"
+      className="surface mx-auto flex w-full max-w-2xl flex-col gap-2 rounded-2xl p-2 sm:flex-row sm:items-center sm:p-2"
     >
-      <input
-        className="min-h-12 flex-1 rounded-xl border border-[var(--color-border)] bg-[var(--color-bg)] px-4 text-sm outline-none transition focus:border-[var(--color-accent)]"
-        placeholder={s.placeholder}
-        value={url}
-        onChange={(event) => setUrl(event.target.value)}
-        disabled={loading}
-      />
-      <Button size="lg" type="submit" disabled={loading || !url.trim()}>
+      <div className="relative flex-1">
+        <svg
+          aria-hidden
+          viewBox="0 0 24 24"
+          className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--color-subtle)]"
+        >
+          <path
+            d="M10.5 14.5l-3 3a3 3 0 01-4.243-4.243l4.243-4.243a3 3 0 014.243 0M13.5 9.5l3-3a3 3 0 014.243 4.243l-4.243 4.243a3 3 0 01-4.243 0"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.6"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </svg>
+        <input
+          className="h-12 w-full rounded-xl border border-transparent bg-transparent px-4 pl-10 text-sm text-[var(--color-fg)] placeholder:text-[var(--color-subtle)] outline-none transition focus:border-[var(--color-accent)] focus:bg-[color-mix(in_oklab,var(--color-bg-deep)_70%,transparent)]"
+          placeholder={s.placeholder}
+          value={url}
+          onChange={(event) => setUrl(event.target.value)}
+          disabled={loading}
+          inputMode="url"
+          autoCapitalize="off"
+          autoCorrect="off"
+          spellCheck={false}
+        />
+      </div>
+      <Button
+        size="lg"
+        type="submit"
+        disabled={loading || !url.trim()}
+        className="h-12 sm:px-7"
+      >
         {loading ? s.loading : s.submit}
       </Button>
-      {error && <p className="text-sm text-[var(--color-danger)] md:basis-full">{error}</p>}
+      {error && (
+        <p className="basis-full px-2 pb-1 text-sm text-[color-mix(in_oklab,var(--color-danger)_55%,white)]">
+          {error}
+        </p>
+      )}
     </form>
   );
 }

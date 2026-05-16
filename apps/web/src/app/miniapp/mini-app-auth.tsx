@@ -2,13 +2,6 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 
 interface TelegramWebApp {
   initData: string;
@@ -29,7 +22,16 @@ type Status =
   | { state: "ok"; userId: string }
   | { state: "error"; message: string };
 
-export function MiniAppAuth() {
+export interface MiniAppAuthStrings {
+  idle: string;
+  verifying: string;
+  ready: string;
+  linkHint: string;
+  retry: string;
+  notInTelegram: string;
+}
+
+export function MiniAppAuth({ strings }: { strings: MiniAppAuthStrings }) {
   const [status, setStatus] = useState<Status>({ state: "idle" });
   const [link, setLink] = useState(false);
 
@@ -62,64 +64,56 @@ export function MiniAppAuth() {
     }
   }, [verify]);
 
+  const dotTone =
+    status.state === "ok"
+      ? "var(--color-mint)"
+      : status.state === "error"
+      ? "var(--color-danger)"
+      : status.state === "verifying"
+      ? "var(--color-accent)"
+      : "var(--color-subtle)";
+
   return (
-    <Card className="w-full">
-      <CardHeader>
-        <CardTitle>Telegram Mini App</CardTitle>
-        <CardDescription>
-          Wave verifies your Telegram <code>initData</code> against the bot
-          token, then signs you in here.
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="flex flex-col gap-3">
-        {status.state === "idle" && (
-          <p className="text-sm text-[var(--color-muted)]">
-            Waiting for the Telegram WebApp environment to provide{" "}
-            <code>initData</code>. If you opened this page outside Telegram,
-            this will stay idle.
-          </p>
-        )}
-        {status.state === "verifying" && (
-          <p className="text-sm">Verifying with the server…</p>
-        )}
-        {status.state === "ok" && (
-          <p className="text-sm">
-            Signed in as user <code>{status.userId}</code>. You can close this
-            and return to the bot.
-          </p>
-        )}
-        {status.state === "error" && (
-          <p className="rounded-md border border-[var(--color-danger)]/40 bg-[var(--color-danger)]/10 p-3 text-sm text-[var(--color-danger)]">
-            {status.message}
-          </p>
-        )}
-
-        <label className="flex items-center gap-2 text-xs text-[var(--color-muted)]">
-          <input
-            type="checkbox"
-            checked={link}
-            onChange={(e) => setLink(e.target.checked)}
-          />
-          Link this Telegram identity to my currently signed-in Google account
-        </label>
-
-        <Button
-          variant="secondary"
-          size="sm"
-          onClick={() => {
-            const wa = window.Telegram?.WebApp;
-            if (wa?.initData) void verify(wa.initData, link);
-            else
-              setStatus({
-                state: "error",
-                message:
-                  "Telegram WebApp is not present. Open this URL via your bot’s Mini App.",
-              });
+    <div className="surface flex w-full flex-col gap-4 rounded-3xl p-5">
+      <div className="flex items-center justify-center gap-2 text-sm">
+        <span
+          aria-hidden
+          className="h-2.5 w-2.5 rounded-full"
+          style={{
+            background: dotTone,
+            boxShadow: `0 0 0 4px color-mix(in oklab, ${dotTone} 25%, transparent)`,
           }}
-        >
-          Re-run verification
-        </Button>
-      </CardContent>
-    </Card>
+        />
+        <span className="text-[var(--color-muted)]">
+          {status.state === "idle" && strings.idle}
+          {status.state === "verifying" && strings.verifying}
+          {status.state === "ok" && strings.ready}
+          {status.state === "error" && status.message}
+        </span>
+      </div>
+
+      <label className="flex items-start gap-2 rounded-2xl border border-[var(--color-border)] bg-[color-mix(in_oklab,var(--color-surface-2)_60%,transparent)] p-3 text-left text-xs text-[var(--color-muted)]">
+        <input
+          type="checkbox"
+          checked={link}
+          onChange={(e) => setLink(e.target.checked)}
+          className="mt-0.5 h-4 w-4 accent-[var(--color-accent)]"
+        />
+        <span>{strings.linkHint}</span>
+      </label>
+
+      <Button
+        variant="secondary"
+        size="md"
+        className="w-full"
+        onClick={() => {
+          const wa = window.Telegram?.WebApp;
+          if (wa?.initData) void verify(wa.initData, link);
+          else setStatus({ state: "error", message: strings.notInTelegram });
+        }}
+      >
+        {strings.retry}
+      </Button>
+    </div>
   );
 }

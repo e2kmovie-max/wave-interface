@@ -33,8 +33,8 @@ const strings = {
     en: "<b>Wave</b> — watch videos together.",
   },
   "start.greeting_body": {
-    ru: "Пришли мне ссылку на YouTube — соберу комнату для совместного просмотра.",
-    en: "Send me a YouTube link and I'll spin up a watch-room for you and your friends.",
+    ru: "Пришли мне ссылку на видео — соберу комнату для совместного просмотра.",
+    en: "Send me a video link and I'll spin up a watch-room for you and your friends.",
   },
   "start.admin_hint": {
     ru: "Ты администратор. /admin откроет панель управления.",
@@ -54,8 +54,8 @@ const strings = {
   },
 
   "room.send_video_url": {
-    ru: "Пришли мне ссылку на видео (например, с YouTube), и я создам комнату.",
-    en: "Send me a video URL (YouTube etc.) and I'll start a watch room.",
+    ru: "Пришли мне ссылку на видео, и я создам комнату для совместного просмотра.",
+    en: "Send me a video link and I'll spin up a watch room.",
   },
   "room.identify_failed": {
     ru: "Не удалось определить твою учётку Wave. Нажми /start и попробуй снова.",
@@ -207,88 +207,123 @@ const strings = {
   "web.brand": { ru: "Wave", en: "Wave" },
   "web.nav.sign_in": { ru: "Войти", en: "Sign in" },
   "web.nav.sign_out": { ru: "Выйти", en: "Sign out" },
-  "web.nav.account": { ru: "Аккаунт", en: "Account" },
-  "web.nav.admin": { ru: "Админка", en: "Admin" },
   "web.nav.language": { ru: "Язык", en: "Language" },
 
   "web.home.title": {
-    ru: "Смотрим видеоролики вместе,",
-    en: "Watch videos together,",
+    ru: "Смотрим вместе,",
+    en: "Watch together,",
   },
   "web.home.title_emph": {
-    ru: "в идеальной синхронизации.",
-    en: "in perfect sync.",
+    ru: "кадр в кадр.",
+    en: "in lockstep.",
   },
   "web.home.lead": {
-    ru: "Пришли ссылку на YouTube (или другой источник из поддерживаемых yt-dlp) и пригласи друзей в общую комнату. Wave синхронизирует play/pause/seek и качество по WebSocket.",
-    en: "Drop in a YouTube link (or any source yt-dlp supports) and invite friends to one shared room. Wave keeps play, pause, seek, and quality in sync over WebSocket.",
+    ru: "Вставь ссылку на видео и пригласи друзей в общую комнату. Wave держит play, pause, seek и качество синхронно у всех зрителей.",
+    en: "Drop a video link and invite friends to one shared room. Wave keeps play, pause, seek and quality aligned across everyone watching.",
   },
   "web.home.cta_sign_in": {
-    ru: "Войдите, чтобы создать комнату",
+    ru: "Войти и создать комнату",
     en: "Sign in to create a room",
   },
   "web.home.form_label": {
-    ru: "Вставьте ссылку на YouTube или другое видео",
-    en: "Paste YouTube / video URL",
+    ru: "Вставь ссылку на видео",
+    en: "Paste a video link",
   },
   "web.home.form_submit": { ru: "Создать комнату", en: "Create room" },
   "web.home.form_invalid": {
-    ru: "Введите корректный http(s) URL видео.",
+    ru: "Введи корректный http(s) URL видео.",
     en: "Enter a valid http(s) video URL.",
   },
-  "web.home.creating": { ru: "Создаём…", en: "Creating room…" },
+  "web.home.creating": { ru: "Создаём…", en: "Spinning up…" },
 
-  "web.login.title": { ru: "Войдите в Wave", en: "Sign in to Wave" },
+  "web.login.title": { ru: "Войти в Wave", en: "Sign in to Wave" },
   "web.login.lead": {
-    ru: "Выберите способ. Оба можно связать в одну учётную запись позже из раздела «Аккаунт».",
-    en: "Pick a method. You can link the two later from the Account page.",
+    ru: "Выбери способ. Позже можно связать обе учётки в одну.",
+    en: "Pick a method. You can link both identities into one account later.",
   },
-  "web.login.google": { ru: "Войти через Google", en: "Continue with Google" },
+  "web.login.google": { ru: "Через Google", en: "Continue with Google" },
   "web.login.guest": { ru: "Войти как гость", en: "Continue as guest" },
   "web.login.guest_label": { ru: "Гостевой вход", en: "Guest sign-in" },
-  "web.login.guest_placeholder": { ru: "Имя в чате", en: "Chat name" },
-  "web.login.telegram": { ru: "Открыть Telegram Mini App", en: "Open Telegram Mini App" },
+  "web.login.guest_placeholder": { ru: "Имя в чате", en: "Chat display name" },
+  "web.login.telegram": { ru: "Открыть в Telegram", en: "Open in Telegram" },
   "web.login.error_google_unconfigured": {
-    ru: "Google OAuth не настроен. Обратитесь к админу.",
-    en: "Google sign-in isn't configured yet — ask the admin.",
+    ru: "Google OAuth не настроен.",
+    en: "Google sign-in isn't configured yet.",
   },
   "web.login.error_bot_unconfigured": {
-    ru: "Бот ещё не подключён. Попробуйте Google.",
-    en: "The bot isn't configured yet — try Google.",
+    ru: "Бот ещё не подключён.",
+    en: "The bot isn't configured yet.",
+  },
+  "web.login.miniapp_hint": {
+    ru: "Уже в Telegram? Открой Mini App — войдём автоматически.",
+    en: "Already inside the bot? Open the Mini App and we'll sign you in.",
   },
 
-  "web.account.title": { ru: "Аккаунт", en: "Account" },
-  "web.account.linked_google": { ru: "Привязан Google", en: "Linked Google" },
-  "web.account.linked_telegram": { ru: "Привязан Telegram", en: "Linked Telegram" },
-  "web.account.not_linked": { ru: "не привязан", en: "not linked" },
+  "web.account.title": { ru: "Связанные аккаунты", en: "Linked identities" },
+  "web.account.lead": {
+    ru: "Подключи Google и Telegram к одной учётке Wave, чтобы открывать комнаты с любого устройства.",
+    en: "Attach Google and Telegram to a single Wave account so rooms follow you across devices.",
+  },
+  "web.account.linked": { ru: "Подключено", en: "Linked" },
+  "web.account.not_linked": { ru: "Не подключено", en: "Not linked" },
   "web.account.link_google": { ru: "Привязать Google", en: "Link Google" },
   "web.account.link_telegram": { ru: "Привязать Telegram", en: "Link Telegram" },
-  "web.account.unlink": { ru: "Отвязать", en: "Unlink" },
+  "web.account.guest_notice": {
+    ru: "Сейчас ты в гостевом режиме. Привяжи Google, чтобы сохранить аккаунт.",
+    en: "You're in guest mode. Link Google to keep this account.",
+  },
 
   "web.room.title": { ru: "Комната", en: "Room" },
   "web.room.share_hint": {
-    ru: "Поделитесь ссылкой, чтобы друзья присоединились.",
-    en: "Share this URL to invite friends.",
+    ru: "Отправь ссылку, чтобы друзья присоединились.",
+    en: "Share this link to invite friends.",
   },
   "web.room.quality": { ru: "Качество", en: "Quality" },
-  "web.room.state_sync": { ru: "Синхронизация", en: "State sync" },
+  "web.room.speed": { ru: "Скорость", en: "Speed" },
+  "web.room.state_sync": { ru: "Синхронизация", en: "Sync" },
   "web.room.duration": { ru: "Длительность", en: "Duration" },
   "web.room.copy_link": { ru: "Скопировать ссылку", en: "Copy link" },
-  "web.room.link_copied": { ru: "Ссылка скопирована", en: "Link copied" },
-
-  "web.admin.title": { ru: "Админ-панель", en: "Admin panel" },
-  "web.admin.cookies": { ru: "Пул Google-кук", en: "Google cookie pool" },
-  "web.admin.instances": { ru: "Инстансы", en: "Instances" },
-  "web.admin.channels": { ru: "Обязательные каналы", en: "Required channels" },
-  "web.admin.health": { ru: "Здоровье", en: "Health" },
-  "web.admin.rotation_count": { ru: "Ротаций", en: "Rotations" },
-  "web.admin.auto_disabled": { ru: "авто-откл.", en: "auto-disabled" },
-  "web.admin.consecutive_failures": {
-    ru: "Подряд фейлов",
-    en: "Consecutive failures",
+  "web.room.link_copied": { ru: "Скопировано", en: "Copied" },
+  "web.room.chat_title": { ru: "Чат", en: "Chat" },
+  "web.room.chat_empty": {
+    ru: "Пока пусто. Поздоровайся первым.",
+    en: "No messages yet. Say hi.",
   },
-  "web.admin.tools_version": { ru: "Версии yt-dlp / ffmpeg", en: "yt-dlp / ffmpeg" },
-  "web.admin.active_streams": { ru: "Активных стримов", en: "Active streams" },
+  "web.room.chat_placeholder": {
+    ru: "Сообщение или эмодзи",
+    en: "Message or emoji",
+  },
+  "web.room.chat_send": { ru: "Отправить", en: "Send" },
+  "web.room.connected": { ru: "На связи", en: "Connected" },
+  "web.room.reconnecting": { ru: "Переподключаемся", en: "Reconnecting" },
+  "web.room.playing": { ru: "Играет", en: "Playing" },
+  "web.room.paused": { ru: "Пауза", en: "Paused" },
+  "web.room.invite": { ru: "Пригласить", en: "Invite" },
+  "web.room.web_invite": { ru: "Через сайт", en: "Web invite" },
+  "web.room.telegram_invite": { ru: "Через Telegram", en: "Telegram invite" },
+
+  "web.miniapp.heading": { ru: "Привет 👋", en: "Welcome 👋" },
+  "web.miniapp.lead": {
+    ru: "Wave подтверждает твой Telegram-аккаунт и связывает его с веб-сессией.",
+    en: "Wave verifies your Telegram identity and links it to a web session.",
+  },
+  "web.miniapp.idle": {
+    ru: "Ждём данные из Telegram… Если это открыто вне Telegram, ничего не произойдёт.",
+    en: "Waiting for the Telegram WebApp environment. Outside Telegram this stays idle.",
+  },
+  "web.miniapp.verifying": {
+    ru: "Проверяем подпись…",
+    en: "Verifying signature…",
+  },
+  "web.miniapp.ready": {
+    ru: "Готово. Возвращайся в бота — сессия активна.",
+    en: "You're in. Head back to the bot — your session is active.",
+  },
+  "web.miniapp.link_hint": {
+    ru: "Связать этот Telegram с моим Google-аккаунтом",
+    en: "Link this Telegram identity to my Google account",
+  },
+  "web.miniapp.retry": { ru: "Повторить", en: "Retry" }
 } as const satisfies Record<string, { ru: string; en: string }>;
 
 export type I18nKey = keyof typeof strings;

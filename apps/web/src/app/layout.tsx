@@ -3,16 +3,17 @@ import "./globals.css";
 import { getCurrentLang } from "@/lib/i18n";
 
 export const metadata: Metadata = {
-  title: "Wave — watch videos together",
+  title: "Wave — watch together, in sync",
   description:
-    "Wave is a synchronized video watch party platform — drop in a link, share a room, and watch in lockstep with your friends.",
+    "Drop a link, send the invite, and watch in lockstep with the people who matter.",
 };
 
 export const viewport: Viewport = {
-  themeColor: "#0e1218",
+  themeColor: "#0a0d14",
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
+  viewportFit: "cover",
 };
 
 export default async function RootLayout({

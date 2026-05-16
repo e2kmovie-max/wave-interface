@@ -2,6 +2,8 @@
 
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { Button } from "@/components/ui/button";
+import { Pill } from "@/components/ui/pill";
+import { cn } from "@/lib/utils";
 
 const EMOJI_REACTIONS = ["😀", "😂", "😍", "🔥", "👏", "🍿", "💙", "🎉"];
 const SPEED_MIN = 0.25;
@@ -28,6 +30,29 @@ export interface ChatMessage {
   createdAt: string;
 }
 
+export interface RoomPlayerStrings {
+  connected: string;
+  reconnecting: string;
+  playing: string;
+  paused: string;
+  quality: string;
+  speed: string;
+  duration: string;
+  stateSync: string;
+  chatTitle: string;
+  chatEmpty: string;
+  chatPlaceholder: string;
+  chatSend: string;
+  invite: string;
+  webInvite: string;
+  telegramInvite: string;
+  copyLink: string;
+  linkCopied: string;
+  play: string;
+  pause: string;
+  signedInAs: string;
+}
+
 interface RoomPlayerProps {
   code: string;
   formats: PlayerFormat[];
@@ -37,6 +62,11 @@ interface RoomPlayerProps {
     id: string;
     name: string;
   };
+  invites: {
+    web: string;
+    telegram: string | null;
+  };
+  strings: RoomPlayerStrings;
 }
 
 type SyncPayload =
@@ -54,6 +84,8 @@ export function RoomPlayer({
   initialState,
   initialMessages,
   currentUser,
+  invites,
+  strings,
 }: RoomPlayerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const socketRef = useRef<WebSocket | null>(null);
@@ -183,9 +215,9 @@ export function RoomPlayer({
   }
 
   return (
-    <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_320px]">
-      <div className="grid gap-4">
-        <div className="overflow-hidden rounded-2xl border border-[var(--color-border)] bg-black shadow-2xl shadow-black/30">
+    <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_360px]">
+      <div className="flex min-w-0 flex-col gap-4">
+        <div className="relative overflow-hidden rounded-3xl border border-[var(--color-border-strong)] bg-black shadow-[0_30px_60px_-30px_rgba(0,0,0,0.65)]">
           <video
             key={selectedFormatId}
             ref={videoRef}
@@ -207,103 +239,292 @@ export function RoomPlayer({
               if (!suppressRef.current) send("seek");
             }}
           />
+          <div className="pointer-events-none absolute left-3 top-3 inline-flex items-center gap-2 rounded-full bg-black/55 px-2.5 py-1 text-xs font-semibold backdrop-blur">
+            <span
+              className="live-dot"
+              data-state={connected ? "ok" : "warn"}
+            />
+            <span className="text-white/90">
+              {connected ? strings.connected : strings.reconnecting}
+            </span>
+          </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)]/70 p-4">
-          <span
-            className={`h-2.5 w-2.5 rounded-full ${connected ? "bg-emerald-400" : "bg-amber-400"}`}
-            title={connected ? "Connected" : "Reconnecting"}
-          />
-          <Button type="button" onClick={() => videoRef.current?.play()}>
-            Play
-          </Button>
-          <Button type="button" variant="secondary" onClick={() => videoRef.current?.pause()}>
-            Pause
-          </Button>
-          <label className="grid gap-1 text-xs uppercase tracking-[0.2em] text-[var(--color-muted)]">
-            Quality
-            <select
-              className="h-10 rounded-lg border border-[var(--color-border)] bg-[var(--color-bg)] px-3 text-sm normal-case tracking-normal text-[var(--color-fg)]"
-              value={selectedFormatId}
-              onChange={(event) => changeQuality(event.target.value)}
+        <div className="surface flex flex-wrap items-center gap-3 rounded-3xl p-3 sm:gap-4 sm:p-4">
+          <div className="flex items-center gap-2">
+            <Button
+              type="button"
+              size="md"
+              onClick={() => videoRef.current?.play()}
             >
-              {formats.map((format) => (
-                <option key={format.formatId} value={format.formatId}>
-                  {format.label}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="grid min-w-48 gap-1 text-xs uppercase tracking-[0.2em] text-[var(--color-muted)]">
-            Speed {playbackRate.toFixed(2)}×
-            <input
-              type="range"
-              min={SPEED_MIN}
-              max={SPEED_MAX}
-              step={SPEED_STEP}
-              value={playbackRate}
-              onChange={(event) => changeSpeed(event.target.value)}
-            />
-          </label>
-          <p className="text-sm text-[var(--color-muted)]">
-            State sync: {state.isPlaying ? "playing" : "paused"} · {Math.round(state.currentTime)}s
-          </p>
+              <PlayGlyph />
+              <span className="hidden sm:inline">{strings.play}</span>
+            </Button>
+            <Button
+              type="button"
+              size="md"
+              variant="secondary"
+              onClick={() => videoRef.current?.pause()}
+            >
+              <PauseGlyph />
+              <span className="hidden sm:inline">{strings.pause}</span>
+            </Button>
+          </div>
+
+          <div className="ml-auto flex flex-wrap items-center gap-3 sm:gap-4">
+            <ControlField label={strings.quality}>
+              <select
+                className="h-9 rounded-lg border border-[var(--color-border)] bg-[color-mix(in_oklab,var(--color-bg-deep)_75%,transparent)] px-2.5 text-sm text-[var(--color-fg)] outline-none transition focus:border-[var(--color-accent)]"
+                value={selectedFormatId}
+                onChange={(event) => changeQuality(event.target.value)}
+                disabled={formats.length === 0}
+              >
+                {formats.length === 0 ? (
+                  <option value="">—</option>
+                ) : (
+                  formats.map((format) => (
+                    <option key={format.formatId} value={format.formatId}>
+                      {format.label}
+                    </option>
+                  ))
+                )}
+              </select>
+            </ControlField>
+
+            <ControlField
+              label={`${strings.speed} · ${playbackRate.toFixed(2)}×`}
+            >
+              <input
+                type="range"
+                min={SPEED_MIN}
+                max={SPEED_MAX}
+                step={SPEED_STEP}
+                value={playbackRate}
+                onChange={(event) => changeSpeed(event.target.value)}
+                className="h-9 w-36 cursor-pointer accent-[var(--color-accent)]"
+              />
+            </ControlField>
+          </div>
+
+          <div className="basis-full text-xs text-[var(--color-subtle)]">
+            <span className="eyebrow inline-block">{strings.stateSync}</span>{" "}
+            <Pill tone={state.isPlaying ? "mint" : "neutral"} className="ml-1">
+              {state.isPlaying ? strings.playing : strings.paused}
+            </Pill>
+            <span className="ml-2 font-mono text-[var(--color-muted)]">
+              {Math.round(state.currentTime)}s
+            </span>
+          </div>
         </div>
       </div>
 
-      <aside className="grid content-start gap-3 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)]/70 p-4">
-        <div>
-          <h2 className="text-lg font-semibold">Chat</h2>
-          <p className="text-sm text-[var(--color-muted)]">Signed in as {currentUser.name}</p>
+      <aside className="surface flex h-full flex-col gap-3 rounded-3xl p-4">
+        <div className="flex flex-col gap-1">
+          <div className="flex items-center justify-between">
+            <h2 className="font-display text-base font-semibold tracking-tight">
+              {strings.chatTitle}
+            </h2>
+            <span className="eyebrow">{currentUser.name}</span>
+          </div>
+          <p className="truncate text-xs text-[var(--color-subtle)]">
+            {strings.signedInAs}
+          </p>
         </div>
-        <div className="grid max-h-[360px] gap-2 overflow-y-auto pr-1">
+
+        <InviteRow
+          label={strings.webInvite}
+          href={invites.web}
+          copyLabel={strings.copyLink}
+          copiedLabel={strings.linkCopied}
+        />
+        {invites.telegram && (
+          <InviteRow
+            label={strings.telegramInvite}
+            href={invites.telegram}
+            copyLabel={strings.copyLink}
+            copiedLabel={strings.linkCopied}
+            telegram
+          />
+        )}
+
+        <div className="scroll-soft -mx-1 flex max-h-[420px] min-h-[180px] flex-1 flex-col gap-2 overflow-y-auto px-1 py-1">
           {messages.length === 0 ? (
-            <p className="rounded-xl border border-dashed border-[var(--color-border)] p-4 text-sm text-[var(--color-muted)]">
-              No messages yet. Say hi with an emoji.
-            </p>
+            <div className="grid flex-1 place-items-center rounded-2xl border border-dashed border-[var(--color-border)] p-6 text-center text-xs text-[var(--color-subtle)]">
+              {strings.chatEmpty}
+            </div>
           ) : (
             messages.map((message) => (
-              <article key={message.id} className="rounded-xl bg-[var(--color-bg)] p-3 text-sm">
-                <div className="mb-1 flex items-center justify-between gap-2">
-                  <strong>{message.name}</strong>
-                  <time className="text-xs text-[var(--color-muted)]">
+              <article
+                key={message.id}
+                className="rounded-2xl border border-[var(--color-border)] bg-[color-mix(in_oklab,var(--color-surface-2)_70%,transparent)] px-3 py-2 text-sm"
+              >
+                <div className="mb-0.5 flex items-baseline justify-between gap-2">
+                  <strong className="truncate text-[13px] font-semibold text-[var(--color-fg)]">
+                    {message.name}
+                  </strong>
+                  <time className="shrink-0 text-[11px] text-[var(--color-subtle)]">
                     {new Date(message.createdAt).toLocaleTimeString([], {
                       hour: "2-digit",
                       minute: "2-digit",
                     })}
                   </time>
                 </div>
-                <p className="break-words">{message.text}</p>
+                <p className="break-words text-[var(--color-fg)]/90">
+                  {message.text}
+                </p>
               </article>
             ))
           )}
         </div>
+
         <div className="flex flex-wrap gap-1">
           {EMOJI_REACTIONS.map((emoji) => (
             <button
               key={emoji}
               type="button"
-              className="rounded-lg border border-[var(--color-border)] bg-[var(--color-bg)] px-2 py-1 text-lg transition hover:border-[var(--color-accent)]"
+              aria-label={emoji}
+              className="grid h-8 w-8 place-items-center rounded-xl border border-[var(--color-border)] bg-[color-mix(in_oklab,var(--color-surface-2)_55%,transparent)] text-base transition hover:scale-105 hover:border-[var(--color-accent)] active:scale-95"
               onClick={() => addEmoji(emoji)}
             >
               {emoji}
             </button>
           ))}
         </div>
-        <form onSubmit={sendChat} className="grid gap-2">
+
+        <form onSubmit={sendChat} className="flex items-center gap-2">
           <input
             value={draft}
             maxLength={280}
             onChange={(event) => setDraft(event.target.value)}
-            placeholder="Message or emoji"
-            className="min-h-11 rounded-xl border border-[var(--color-border)] bg-[var(--color-bg)] px-3 text-sm outline-none transition focus:border-[var(--color-accent)]"
+            placeholder={strings.chatPlaceholder}
+            className="h-10 min-w-0 flex-1 rounded-xl border border-[var(--color-border)] bg-[color-mix(in_oklab,var(--color-bg-deep)_75%,transparent)] px-3 text-sm outline-none transition focus:border-[var(--color-accent)] focus:bg-[color-mix(in_oklab,var(--color-bg-deep)_88%,transparent)]"
+            aria-label={strings.chatPlaceholder}
           />
-          <Button type="submit" disabled={!draft.trim() || !connected}>
-            Send
+          <Button
+            type="submit"
+            size="md"
+            disabled={!draft.trim() || !connected}
+          >
+            {strings.chatSend}
           </Button>
         </form>
       </aside>
     </div>
+  );
+}
+
+function ControlField({
+  label,
+  children,
+}: {
+  label: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <label className="flex flex-col gap-1">
+      <span className="eyebrow whitespace-nowrap">{label}</span>
+      {children}
+    </label>
+  );
+}
+
+function InviteRow({
+  label,
+  href,
+  copyLabel,
+  copiedLabel,
+  telegram,
+}: {
+  label: string;
+  href: string;
+  copyLabel: string;
+  copiedLabel: string;
+  telegram?: boolean;
+}) {
+  const [copied, setCopied] = useState(false);
+  return (
+    <div
+      className={cn(
+        "flex items-center gap-2 rounded-2xl border border-[var(--color-border)] bg-[color-mix(in_oklab,var(--color-surface-2)_55%,transparent)] px-3 py-2",
+      )}
+    >
+      <span
+        aria-hidden
+        className="grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-[color-mix(in_oklab,var(--color-accent)_18%,transparent)] text-[var(--color-accent)]"
+      >
+        {telegram ? <TelegramGlyph /> : <LinkGlyph />}
+      </span>
+      <div className="flex min-w-0 flex-1 flex-col">
+        <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--color-subtle)]">
+          {label}
+        </span>
+        <a
+          href={href}
+          target="_blank"
+          rel="noreferrer"
+          className="truncate text-xs text-[var(--color-fg)] underline-offset-4 hover:underline"
+        >
+          {href}
+        </a>
+      </div>
+      <button
+        type="button"
+        className="rounded-lg border border-[var(--color-border)] px-2 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--color-muted)] transition hover:border-[var(--color-accent)] hover:text-[var(--color-fg)]"
+        onClick={async () => {
+          try {
+            await navigator.clipboard.writeText(href);
+            setCopied(true);
+            window.setTimeout(() => setCopied(false), 1400);
+          } catch {
+            // noop — fallback is the link itself
+          }
+        }}
+      >
+        {copied ? copiedLabel : copyLabel}
+      </button>
+    </div>
+  );
+}
+
+function PlayGlyph() {
+  return (
+    <svg aria-hidden viewBox="0 0 16 16" className="h-3.5 w-3.5">
+      <path fill="currentColor" d="M4 2.5v11l10-5.5z" />
+    </svg>
+  );
+}
+
+function PauseGlyph() {
+  return (
+    <svg aria-hidden viewBox="0 0 16 16" className="h-3.5 w-3.5">
+      <path fill="currentColor" d="M3 2h4v12H3zM9 2h4v12H9z" />
+    </svg>
+  );
+}
+
+function LinkGlyph() {
+  return (
+    <svg aria-hidden viewBox="0 0 24 24" className="h-4 w-4">
+      <path
+        d="M10.5 14.5l-3 3a3 3 0 01-4.243-4.243l4.243-4.243a3 3 0 014.243 0M13.5 9.5l3-3a3 3 0 014.243 4.243l-4.243 4.243a3 3 0 01-4.243 0"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function TelegramGlyph() {
+  return (
+    <svg aria-hidden viewBox="0 0 24 24" className="h-4 w-4">
+      <path
+        fill="currentColor"
+        d="M21.94 4.27 18.7 19.94c-.24 1.06-.86 1.31-1.75.82l-4.83-3.56-2.33 2.25c-.26.26-.47.47-.96.47l.34-4.88L17.94 6.5c.39-.34-.08-.54-.6-.2L7.42 12.7l-4.81-1.5c-1.04-.32-1.06-1.04.22-1.55l18.81-7.25c.87-.32 1.63.2 1.3 1.87z"
+      />
+    </svg>
   );
 }
 
