@@ -10,6 +10,8 @@
     "./env": "./src/env.ts",
     "./crypto": "./src/crypto.ts",
     "./telegram": "./src/telegram.ts",
+    "./telegram-notify": "./src/telegram-notify.ts",
+    "./tg-link": "./src/tg-link.ts",
     "./instance-client": "./src/instance-client.ts",
     "./instance-sync": "./src/instance-sync.ts",
     "./watch-party": "./src/watch-party.ts",

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { isGoogleOAuthConfigured } from "@/lib/wave-interface";
-import { buildGoogleAuthUrl } from "@/lib/google-oauth";
+import { isGoogleOAuthConfigured, verifyTgLinkToken } from "@/lib/wave-interface";
+import { buildGoogleAuthUrl, type GoogleAuthState } from "@/lib/google-oauth";
 import { readSession } from "@/lib/session";
 
 export const runtime = "nodejs";
@@ -18,8 +18,23 @@ export async function GET(req: NextRequest) {
   }
   const next = req.nextUrl.searchParams.get("next") ?? "/";
   const link = req.nextUrl.searchParams.get("link") === "1";
+  const tgLink = req.nextUrl.searchParams.get("tgLink");
 
-  const session = link ? await readSession() : null;
-  const state = link && session ? { next, linkUid: session.uid } : { next };
+  const state: GoogleAuthState = { next };
+
+  if (tgLink) {
+    // /tg-auth deeplink flow: re-verify the signed token before propagating
+    // it through OAuth state so we fail fast if it expired in the meantime.
+    if (!verifyTgLinkToken(tgLink)) {
+      return NextResponse.redirect(
+        new URL("/tg-auth/error?reason=expired", req.url),
+      );
+    }
+    state.tgLink = tgLink;
+  } else if (link) {
+    const session = await readSession();
+    if (session) state.linkUid = session.uid;
+  }
+
   return NextResponse.redirect(buildGoogleAuthUrl(state));
 }

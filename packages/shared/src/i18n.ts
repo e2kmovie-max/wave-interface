@@ -323,7 +323,81 @@ const strings = {
     ru: "Связать этот Telegram с моим Google-аккаунтом",
     en: "Link this Telegram identity to my Google account",
   },
-  "web.miniapp.retry": { ru: "Повторить", en: "Retry" }
+  "web.miniapp.retry": { ru: "Повторить", en: "Retry" },
+
+  // ---------------------------------------------------------------------
+  // Telegram → Google linking deeplink ("/tg-auth?token=...").
+  // ---------------------------------------------------------------------
+  "web.tgauth.title": {
+    ru: "Привязка Telegram к Google",
+    en: "Link Telegram with Google",
+  },
+  "web.tgauth.greeting": {
+    ru: "Привет, {name}! Войди через Google — и мы свяжем этот Telegram-аккаунт с твоим профилем Wave.",
+    en: "Hi {name}! Sign in with Google and we'll link this Telegram identity to your Wave profile.",
+  },
+  "web.tgauth.continue": {
+    ru: "Продолжить через Google",
+    en: "Continue with Google",
+  },
+  "web.tgauth.security_note": {
+    ru: "Ссылка одноразовая, подписана сервером и действует 10 минут. Если истекла — открой /link в боте ещё раз.",
+    en: "The link is single-use, server-signed and valid for 10 minutes. If it expired, run /link in the bot again.",
+  },
+  "web.tgauth.done_title": {
+    ru: "Готово — аккаунты связаны",
+    en: "Done — accounts are linked",
+  },
+  "web.tgauth.done_body": {
+    ru: "Google и Telegram теперь указывают на одну учётку Wave. Можешь вернуться в бота — он подтвердит связку отдельным сообщением.",
+    en: "Google and Telegram now point to the same Wave account. You can return to the bot — it'll confirm the link in a separate message.",
+  },
+  "web.tgauth.back_to_bot": {
+    ru: "Вернуться в бота",
+    en: "Back to the bot",
+  },
+  "web.tgauth.open_account": {
+    ru: "Открыть «Аккаунт»",
+    en: "Open “Account”",
+  },
+  "web.tgauth.error_title": {
+    ru: "Не получилось привязать аккаунт",
+    en: "Couldn't link the account",
+  },
+  "web.tgauth.error_invalid": {
+    ru: "Ссылка не подписана или повреждена.",
+    en: "The link is not signed or is corrupted.",
+  },
+  "web.tgauth.error_expired": {
+    ru: "Ссылка просрочена (живёт 10 минут). Открой /link в боте ещё раз.",
+    en: "The link expired (10-minute lifetime). Run /link in the bot again.",
+  },
+  "web.tgauth.error_already_linked": {
+    ru: "Этот Google-аккаунт уже привязан к другой учётке Wave.",
+    en: "That Google account is already linked to a different Wave user.",
+  },
+  "web.tgauth.error_bot_disabled": {
+    ru: "Бот не настроен на сервере, привязка через /link недоступна.",
+    en: "The bot isn't configured on the server, so /link isn't available.",
+  },
+  "web.tgauth.notify_success": {
+    ru: "✅ Готово. Google-аккаунт <b>{email}</b> теперь связан с твоим Telegram. Можешь создавать комнаты с любого устройства.",
+    en: "✅ Done. Google account <b>{email}</b> is now linked to your Telegram. You can create rooms from any device.",
+  },
+  "bot.link.intro": {
+    ru:
+      "Открой эту ссылку, войди через Google — и я свяжу этот Telegram-аккаунт с твоим Google-профилем Wave.",
+    en:
+      "Open this link, sign in with Google and I'll link this Telegram identity to your Google profile on Wave.",
+  },
+  "bot.link.button": {
+    ru: "🔗 Привязать Google",
+    en: "🔗 Link Google",
+  },
+  "bot.link.disabled": {
+    ru: "Привязка через Google недоступна: не настроен Google OAuth или PUBLIC_WEB_URL.",
+    en: "Google linking is unavailable: Google OAuth or PUBLIC_WEB_URL is not configured.",
+  }
 } as const satisfies Record<string, { ru: string; en: string }>;
 
 export type I18nKey = keyof typeof strings;

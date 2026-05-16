@@ -27,7 +27,7 @@ const LINK_ERROR_MESSAGES_RU: Record<string, string> = {
 export default async function AccountPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string }>;
+  searchParams: Promise<{ error?: string; linked?: string }>;
 }) {
   const session = await readSession();
   if (!session || !Types.ObjectId.isValid(session.uid)) redirect("/login?next=/account");
@@ -44,6 +44,12 @@ export default async function AccountPage({
   const error = params.error
     ? errorTable[params.error] ?? params.error
     : null;
+  const linkedNotice =
+    params.linked === "google"
+      ? lang === "ru"
+        ? "Google привязан — теперь Telegram и Google указывают на одну учётку Wave."
+        : "Google linked — Telegram and Google now point to the same Wave account."
+      : null;
   const googleReady = isGoogleOAuthConfigured(env);
 
   const hasGoogle = Boolean(user.googleId);
@@ -96,6 +102,12 @@ export default async function AccountPage({
       {error && (
         <div className="mt-4 rounded-2xl border border-[color-mix(in_oklab,var(--color-danger)_45%,transparent)] bg-[color-mix(in_oklab,var(--color-danger)_15%,transparent)] p-3 text-sm text-[color-mix(in_oklab,var(--color-danger)_55%,white)]">
           {error}
+        </div>
+      )}
+
+      {linkedNotice && (
+        <div className="mt-4 rounded-2xl border border-[color-mix(in_oklab,var(--color-mint)_45%,transparent)] bg-[color-mix(in_oklab,var(--color-mint)_15%,transparent)] p-3 text-sm text-[var(--color-mint)]">
+          {linkedNotice}
         </div>
       )}
 
