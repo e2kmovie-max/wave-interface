@@ -3,6 +3,7 @@ import { conversations } from "@grammyjs/conversations";
 import type { WaveContext, SessionData } from "./context";
 import { authMiddleware } from "./middlewares/auth";
 import { startHandler } from "./handlers/start";
+import { linkHandler } from "./handlers/link";
 import { opHandler, createRoomForUser, gateBehindOp } from "./handlers/op";
 import { adminComposer } from "./admin";
 import { conversationsComposer } from "./conversations";
@@ -22,6 +23,7 @@ export function createBot(token: string): Bot<WaveContext> {
 
   bot.use(opHandler);
   bot.use(adminComposer);
+  bot.use(linkHandler);
   bot.use(startHandler);
 
   bot.on("message:text", async (ctx) => {

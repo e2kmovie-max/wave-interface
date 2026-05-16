@@ -16,6 +16,13 @@ export interface GoogleAuthState {
   next?: string;
   /** When set, this is a "link Google to existing user" flow for that user id. */
   linkUid?: string;
+  /**
+   * When set, the OAuth flow was kicked off by the /tg-auth deeplink — this is
+   * the original (already-verified) Telegram link token. The callback re-verifies
+   * it and links the Google identity onto the user matching the embedded
+   * `tgUserId`.
+   */
+  tgLink?: string;
 }
 
 export function buildGoogleAuthUrl(state: GoogleAuthState): string {

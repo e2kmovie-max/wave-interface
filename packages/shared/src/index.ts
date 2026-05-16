@@ -2,6 +2,8 @@ export * from "./env";
 export * from "./db";
 export * from "./crypto";
 export * from "./telegram";
+export * from "./telegram-notify";
+export * from "./tg-link";
 export * from "./instance-client";
 export * from "./instance-sync";
 export * from "./watch-party";
