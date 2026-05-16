@@ -3,14 +3,9 @@ import { notFound, redirect } from "next/navigation";
 import { getEnv, User } from "@/lib/wave-interface";
 import { connectMongo, makeRoomState, Room } from "@/lib/clients/social";
 import { readSession } from "@/lib/session";
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { WaveBrand } from "@/components/brand/wave-mark";
+import { Pill } from "@/components/ui/pill";
+import { getTranslator } from "@/lib/i18n";
 import { RoomPlayer, type ChatMessage, type PlayerFormat } from "./room-player";
 
 export const dynamic = "force-dynamic";
@@ -33,6 +28,7 @@ export default async function RoomPage({
   if (!user) redirect(`/login?next=/rooms/${encodeURIComponent(code)}`);
 
   const env = getEnv();
+  const { lang, t } = await getTranslator();
   const webInvite = `${env.PUBLIC_WEB_URL.replace(/\/$/, "")}/rooms/${room.code}`;
   const botInvite =
     room.source === "bot" && room.botPayload && env.BOT_USERNAME
@@ -42,111 +38,113 @@ export default async function RoomPage({
     formatId: format.formatId,
     label: format.label,
   }));
-  const initialMessages: ChatMessage[] = (room.chatMessages ?? []).slice(-100).map((message) => ({
-    id: String(message._id),
-    name: message.name,
-    text: message.text,
-    createdAt: (message.createdAt ?? new Date()).toISOString(),
-  }));
+  const initialMessages: ChatMessage[] = (room.chatMessages ?? [])
+    .slice(-100)
+    .map((message) => ({
+      id: String(message._id),
+      name: message.name,
+      text: message.text,
+      createdAt: (message.createdAt ?? new Date()).toISOString(),
+    }));
   const currentUser = {
     id: String(user._id),
     name: displayName(user),
   };
 
   return (
-    <main className="mx-auto flex min-h-dvh max-w-7xl flex-col gap-6 px-6 py-8">
-      <header className="flex items-center justify-between">
-        <Link href="/" className="text-sm text-[var(--color-muted)] hover:underline">
-          ← Home
+    <main className="mx-auto flex min-h-dvh max-w-6xl flex-col gap-6 px-4 py-5 sm:px-6 sm:py-8">
+      <header className="flex items-center justify-between gap-3">
+        <Link
+          href="/"
+          className="rounded-2xl outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent)]"
+        >
+          <WaveBrand />
         </Link>
-        <Link href="/account">
-          <Button variant="secondary" size="sm">Account</Button>
-        </Link>
+        <div className="flex items-center gap-2">
+          <Pill tone="accent" className="hidden sm:inline-flex">
+            <span className="opacity-75">
+              {lang === "ru" ? "Код" : "Code"}
+            </span>
+            <span className="font-mono tracking-[0.18em]">{room.code}</span>
+          </Pill>
+        </div>
       </header>
 
-      <section className="grid gap-6 lg:grid-cols-[1fr_320px]">
-        <div className="grid gap-4">
-          <div>
-            <p className="mb-2 text-sm uppercase tracking-[0.35em] text-[var(--color-muted)]">
-              Room {room.code}
-            </p>
-            <h1 className="text-balance text-3xl font-bold tracking-tight md:text-4xl">
-              {room.videoTitle ?? "Watch room"}
-            </h1>
-            {room.videoUploader && (
-              <p className="mt-2 text-[var(--color-muted)]">{room.videoUploader}</p>
-            )}
-          </div>
-          <RoomPlayer
-            code={room.code}
-            formats={formats}
-            initialState={makeRoomState(room)}
-            initialMessages={initialMessages}
-            currentUser={currentUser}
-          />
+      <section className="flex flex-col gap-1">
+        <span className="eyebrow flex items-center gap-2">
+          <span>{t("web.room.title")}</span>
+          <span aria-hidden className="text-[var(--color-subtle)]">·</span>
+          <span className="font-mono tracking-[0.18em]">{room.code}</span>
+        </span>
+        <h1 className="text-balance font-display text-2xl font-semibold tracking-tight sm:text-3xl md:text-4xl">
+          {room.videoTitle ?? (lang === "ru" ? "Совместный просмотр" : "Watch room")}
+        </h1>
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-[var(--color-muted)]">
+          {room.videoUploader && <span className="truncate">{room.videoUploader}</span>}
+          {room.videoUploader && (
+            <span aria-hidden className="text-[var(--color-subtle)]">·</span>
+          )}
+          <span>{formatDuration(room.videoDuration ?? undefined, lang)}</span>
+          {formats.length > 0 && (
+            <>
+              <span aria-hidden className="text-[var(--color-subtle)]">·</span>
+              <span>
+                {formats.length}{" "}
+                {lang === "ru" ? "качества" : "qualities"}
+              </span>
+            </>
+          )}
         </div>
-
-        <aside className="grid content-start gap-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Invite</CardTitle>
-              <CardDescription>
-                Share the room link. Telegram-created rooms prefer the bot deeplink.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="grid gap-3 text-sm">
-              {botInvite && (
-                <CopyableLink label="Telegram invite" href={botInvite} />
-              )}
-              <CopyableLink label="Web invite" href={webInvite} />
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Preview</CardTitle>
-              <CardDescription>
-                {formatDuration(room.videoDuration ?? undefined)} · {formats.length} quality presets
-              </CardDescription>
-            </CardHeader>
-            {room.videoThumbnail && (
-              <CardContent>
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={room.videoThumbnail}
-                  alt=""
-                  className="aspect-video w-full rounded-xl object-cover"
-                />
-              </CardContent>
-            )}
-          </Card>
-        </aside>
       </section>
+
+      <RoomPlayer
+        code={room.code}
+        formats={formats}
+        initialState={makeRoomState(room)}
+        initialMessages={initialMessages}
+        currentUser={currentUser}
+        invites={{ web: webInvite, telegram: botInvite }}
+        strings={{
+          connected: t("web.room.connected"),
+          reconnecting: t("web.room.reconnecting"),
+          playing: t("web.room.playing"),
+          paused: t("web.room.paused"),
+          quality: t("web.room.quality"),
+          speed: t("web.room.speed"),
+          duration: t("web.room.duration"),
+          stateSync: t("web.room.state_sync"),
+          chatTitle: t("web.room.chat_title"),
+          chatEmpty: t("web.room.chat_empty"),
+          chatPlaceholder: t("web.room.chat_placeholder"),
+          chatSend: t("web.room.chat_send"),
+          invite: t("web.room.invite"),
+          webInvite: t("web.room.web_invite"),
+          telegramInvite: t("web.room.telegram_invite"),
+          copyLink: t("web.room.copy_link"),
+          linkCopied: t("web.room.link_copied"),
+          play: lang === "ru" ? "Запустить" : "Play",
+          pause: lang === "ru" ? "Пауза" : "Pause",
+          signedInAs:
+            lang === "ru"
+              ? `Ты — ${currentUser.name}`
+              : `Signed in as ${currentUser.name}`,
+        }}
+      />
     </main>
   );
 }
 
-function CopyableLink({ label, href }: { label: string; href: string }) {
-  return (
-    <div className="grid gap-1">
-      <span className="text-xs uppercase tracking-[0.2em] text-[var(--color-muted)]">{label}</span>
-      <a
-        className="break-all rounded-lg border border-[var(--color-border)] bg-[var(--color-bg)] p-3 hover:border-[var(--color-accent)]"
-        href={href}
-        target="_blank"
-        rel="noreferrer"
-      >
-        {href}
-      </a>
-    </div>
-  );
-}
-
-function formatDuration(seconds?: number): string {
-  if (!seconds) return "Unknown duration";
+function formatDuration(seconds: number | undefined, lang: "ru" | "en"): string {
+  if (!seconds) return lang === "ru" ? "Длительность неизвестна" : "Unknown duration";
   const rounded = Math.round(seconds);
-  const minutes = Math.floor(rounded / 60);
+  const hours = Math.floor(rounded / 3600);
+  const minutes = Math.floor((rounded % 3600) / 60);
   const rest = rounded % 60;
+  if (hours > 0) {
+    return `${hours}:${minutes.toString().padStart(2, "0")}:${rest
+      .toString()
+      .padStart(2, "0")}`;
+  }
   return `${minutes}:${rest.toString().padStart(2, "0")}`;
 }
 

@@ -1,76 +1,60 @@
 import Link from "next/link";
+import { Types } from "mongoose";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { isGoogleOAuthConfigured, isBotConfigured } from "@/lib/wave-interface";
+import { Pill } from "@/components/ui/pill";
+import { User } from "@/lib/wave-interface";
+import { connectMongo } from "@/lib/clients/social";
 import { readSession } from "@/lib/session";
-import { checkAdmin } from "@/lib/admin-access";
 import { getTranslator } from "@/lib/i18n";
-import { LangSwitcher } from "@/components/lang-switcher";
+import { SiteHeader } from "@/components/site-header";
 import { CreateRoomForm } from "./create-room-form";
 
 export const dynamic = "force-dynamic";
 
 export default async function Home() {
   const session = await readSession();
-  const googleReady = isGoogleOAuthConfigured();
-  const botReady = isBotConfigured();
-  const adminCheck = session ? await checkAdmin() : { status: "unauthenticated" as const };
-  const isAdmin = adminCheck.status === "ok";
   const { lang, t } = await getTranslator();
 
-  return (
-    <main className="mx-auto flex min-h-dvh max-w-5xl flex-col px-6 py-10">
-      <header className="flex items-center justify-between">
-        <Link href="/" className="flex items-center gap-2">
-          <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-[var(--color-accent)] text-[var(--color-accent-fg)] font-black">
-            W
-          </span>
-          <span className="text-lg font-semibold tracking-tight">{t("web.brand")}</span>
-        </Link>
-        <nav className="flex items-center gap-2">
-          <LangSwitcher current={lang} />
-          {session ? (
-            <>
-              {isAdmin && (
-                <Link href="/admin">
-                  <Button variant="ghost" size="sm">{t("web.nav.admin")}</Button>
-                </Link>
-              )}
-              <Link href="/account">
-                <Button variant="ghost" size="sm">{t("web.nav.account")}</Button>
-              </Link>
-              <form action="/api/auth/logout" method="post">
-                <Button variant="secondary" size="sm" type="submit">
-                  {t("web.nav.sign_out")}
-                </Button>
-              </form>
-            </>
-          ) : (
-            <Link href="/login">
-              <Button size="sm">{t("web.nav.sign_in")}</Button>
-            </Link>
-          )}
-        </nav>
-      </header>
+  let viewer: { name: string; initials: string } | null = null;
+  if (session && Types.ObjectId.isValid(session.uid)) {
+    await connectMongo();
+    const user = await User.findById(session.uid).lean();
+    if (user) {
+      const name = displayName(user);
+      viewer = { name, initials: initialsFor(name) };
+    }
+  }
 
-      <section className="flex flex-1 flex-col items-center justify-center gap-8 py-20 text-center">
-        <h1 className="text-balance text-5xl font-bold leading-[1.05] tracking-tight md:text-6xl">
+  return (
+    <main className="relative mx-auto flex min-h-dvh max-w-5xl flex-col px-5 py-6 sm:px-8 sm:py-10">
+      <SiteHeader
+        lang={lang}
+        user={viewer}
+        signInLabel={t("web.nav.sign_in")}
+        signOutLabel={t("web.nav.sign_out")}
+      />
+
+      <section className="relative flex flex-1 flex-col items-center justify-center gap-10 pb-12 pt-10 text-center sm:pt-20">
+        <div className="wave-grid pointer-events-none absolute inset-x-0 top-0 -z-10 h-72 opacity-60" />
+
+        <Pill tone="accent" className="gap-2">
+          <span className="live-dot" aria-hidden />
+          {lang === "ru" ? "Синхронный просмотр" : "Synced watch party"}
+        </Pill>
+
+        <h1 className="text-balance font-display text-[44px] font-semibold leading-[1.02] tracking-[-0.02em] sm:text-6xl md:text-7xl">
           {t("web.home.title")}
           <br />
-          <span className="bg-gradient-to-r from-[var(--color-accent)] to-pink-300 bg-clip-text text-transparent">
+          <span className="bg-gradient-to-br from-[var(--color-accent)] via-[color-mix(in_oklab,var(--color-accent)_70%,white)] to-[var(--color-coral)] bg-clip-text text-transparent">
             {t("web.home.title_emph")}
           </span>
         </h1>
-        <p className="max-w-2xl text-balance text-lg text-[var(--color-muted)]">
+
+        <p className="max-w-2xl text-balance text-base leading-relaxed text-[var(--color-muted)] sm:text-lg">
           {t("web.home.lead")}
         </p>
-        {session ? (
+
+        {viewer ? (
           <CreateRoomForm
             strings={{
               placeholder: t("web.home.form_label"),
@@ -79,68 +63,107 @@ export default async function Home() {
               invalid: t("web.home.form_invalid"),
               subscriptionRequired:
                 lang === "ru"
-                  ? "Сначала подпишитесь на обязательные каналы: {channels}. Затем нажмите «Создать комнату» ещё раз."
+                  ? "Сначала подпишись на обязательные каналы: {channels}. Затем нажми «Создать комнату» ещё раз."
                   : "Subscribe to the required channels first: {channels}. Then press “Create room” again.",
             }}
           />
         ) : (
-          <div className="flex flex-wrap items-center justify-center gap-3">
-            <Link href="/login">
-              <Button size="lg">{t("web.home.cta_sign_in")}</Button>
+          <div className="flex flex-col items-center gap-3">
+            <Link href="/login" className="w-full sm:w-auto">
+              <Button size="lg" className="w-full px-8 sm:w-auto">
+                {t("web.home.cta_sign_in")}
+              </Button>
             </Link>
-            <a href="https://github.com/e2kmovie-max/Wave" target="_blank" rel="noreferrer">
-              <Button variant="secondary" size="lg">GitHub</Button>
-            </a>
+            <p className="text-xs text-[var(--color-subtle)]">
+              {lang === "ru"
+                ? "Без регистрации. Войди через Google или Telegram."
+                : "No signup form. One tap with Google or Telegram."}
+            </p>
           </div>
         )}
       </section>
 
-      <section className="grid gap-4 pb-10 md:grid-cols-3">
-        <Card>
-          <CardHeader>
-            <CardTitle>Google sign-in</CardTitle>
-            <CardDescription>
-              {googleReady
-                ? "Configured. Use the “Sign in with Google” button on /login."
-                : "Stub: set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET to enable."}
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="text-sm text-[var(--color-muted)]">
-            OAuth 2.0 authorization-code flow with HMAC-signed state and a
-            secure session cookie. See <code className="text-[var(--color-fg)]">apps/web/src/lib/google-oauth.ts</code>.
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Telegram Mini App</CardTitle>
-            <CardDescription>
-              {botReady
-                ? "Configured. Open the bot’s Mini App from inside Telegram."
-                : "Stub: set BOT_TOKEN and BOT_USERNAME to enable."}
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="text-sm text-[var(--color-muted)]">
-            Verifies <code className="text-[var(--color-fg)]">initData</code>{" "}
-            via HMAC-SHA-256 per the Telegram spec, then issues a session
-            cookie compatible with the web flow.
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Account linking</CardTitle>
-            <CardDescription>
-              Link your Google and Telegram identities into one Wave account.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="text-sm text-[var(--color-muted)]">
-            From <code className="text-[var(--color-fg)]">/account</code> you
-            can attach the missing identity to the user you’re currently signed
-            in as.
-          </CardContent>
-        </Card>
+      <section className="grid gap-3 pb-12 sm:grid-cols-3">
+        {steps(lang).map((step, idx) => (
+          <div
+            key={step.title}
+            className="group relative overflow-hidden rounded-3xl border border-[var(--color-border)] bg-[color-mix(in_oklab,var(--color-surface)_55%,transparent)] p-5 backdrop-blur-md transition-colors hover:border-[var(--color-border-strong)]"
+          >
+            <span className="font-mono text-[11px] font-semibold uppercase tracking-[0.32em] text-[var(--color-subtle)]">
+              0{idx + 1}
+            </span>
+            <h3 className="mt-4 font-display text-lg font-semibold tracking-tight">
+              {step.title}
+            </h3>
+            <p className="mt-1.5 text-sm leading-relaxed text-[var(--color-muted)]">
+              {step.body}
+            </p>
+          </div>
+        ))}
       </section>
     </main>
   );
+}
+
+function steps(
+  lang: "ru" | "en",
+): Array<{ title: string; body: string }> {
+  if (lang === "ru") {
+    return [
+      {
+        title: "Вставь ссылку",
+        body: "Любая поддерживаемая ссылка на видео. Без выбора источника, без лишних шагов.",
+      },
+      {
+        title: "Поделись комнатой",
+        body: "Wave соберёт инвайт, который можно отправить в чат прямо из Telegram.",
+      },
+      {
+        title: "Смотрите вместе",
+        body: "Play, pause, seek и качество синхронизируются автоматически у всех зрителей.",
+      },
+    ];
+  }
+  return [
+    {
+      title: "Drop a link",
+      body: "Any supported video URL. No source picker, no extra steps.",
+    },
+    {
+      title: "Share the room",
+      body: "Wave generates an invite you can forward from inside Telegram in one tap.",
+    },
+    {
+      title: "Watch in lockstep",
+      body: "Play, pause, seek and quality stay synced across every viewer automatically.",
+    },
+  ];
+}
+
+function displayName(user: {
+  googleName?: string | null;
+  googleEmail?: string | null;
+  telegramUsername?: string | null;
+  telegramFirstName?: string | null;
+  guestName?: string | null;
+}): string {
+  return (
+    user.googleName ??
+    user.telegramFirstName ??
+    user.telegramUsername ??
+    user.guestName ??
+    user.googleEmail ??
+    "Guest"
+  );
+}
+
+function initialsFor(name: string): string {
+  const tokens = name
+    .replace(/[^\p{L}\p{N}\s]/gu, " ")
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean);
+  if (tokens.length === 0) return "·";
+  if (tokens.length === 1) return tokens[0]!.slice(0, 2).toUpperCase();
+  return `${tokens[0]![0]}${tokens[1]![0]}`.toUpperCase();
 }
