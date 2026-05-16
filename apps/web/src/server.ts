@@ -42,7 +42,6 @@ server.on("upgrade", (req, socket, head) => {
   const url = new URL(req.url ?? "/", `http://${req.headers.host ?? "localhost"}`);
   const match = /^\/api\/rooms\/([^/]+)\/sync$/.exec(url.pathname);
   if (!match) {
-    socket.destroy();
     return;
   }
   const code = match[1]?.toUpperCase();
