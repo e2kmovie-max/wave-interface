@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { isGoogleOAuthConfigured, verifyTgLinkToken } from "@/lib/wave-interface";
 import { buildGoogleAuthUrl, type GoogleAuthState } from "@/lib/google-oauth";
+import { publicUrl } from "@/lib/public-url";
 import { readSession } from "@/lib/session";
 
 export const runtime = "nodejs";
@@ -27,7 +28,7 @@ export async function GET(req: NextRequest) {
     // it through OAuth state so we fail fast if it expired in the meantime.
     if (!verifyTgLinkToken(tgLink)) {
       return NextResponse.redirect(
-        new URL("/tg-auth/error?reason=expired", req.url),
+        publicUrl("/tg-auth/error?reason=expired", req),
       );
     }
     state.tgLink = tgLink;

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { connectMongo, User } from "@/lib/wave-interface";
+import { publicUrl } from "@/lib/public-url";
 import { writeSession } from "@/lib/session";
 
 export const runtime = "nodejs";
@@ -13,7 +14,10 @@ export async function POST(req: NextRequest) {
   await writeSession({ uid: String(user._id) });
 
   const next = req.nextUrl.searchParams.get("next");
-  return NextResponse.redirect(new URL(next && next.startsWith("/") ? next : "/", req.url), 303);
+  return NextResponse.redirect(
+    publicUrl(next && next.startsWith("/") ? next : "/", req),
+    303,
+  );
 }
 
 async function readName(req: NextRequest): Promise<string | null> {
