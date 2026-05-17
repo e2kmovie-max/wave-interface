@@ -1,6 +1,7 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { SUPPORTED_WEB_LANGS, type Lang } from "@/lib/wave-interface";
 import { LANG_COOKIE_NAME } from "@/lib/i18n";
+import { publicUrl } from "@/lib/public-url";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -10,7 +11,7 @@ export const dynamic = "force-dynamic";
  * next render. Accepts JSON `{ "lang": "ru" | "en" }` or a form `lang=` field
  * so a no-JS `<form>` works too.
  */
-export async function POST(request: Request): Promise<NextResponse> {
+export async function POST(request: NextRequest): Promise<NextResponse> {
   let lang: string | undefined;
   const ct = request.headers.get("content-type") ?? "";
   if (ct.includes("application/json")) {
@@ -35,7 +36,7 @@ export async function POST(request: Request): Promise<NextResponse> {
   const wantsJson = ct.includes("application/json") || request.headers.get("accept")?.includes("application/json");
   const res = wantsJson
     ? NextResponse.json({ ok: true, lang: trimmed })
-    : NextResponse.redirect(referer ?? new URL("/", request.url));
+    : NextResponse.redirect(referer ?? publicUrl("/", request));
   res.cookies.set(LANG_COOKIE_NAME, trimmed, {
     path: "/",
     httpOnly: false, // accessible to client JS so an in-page switcher can read it

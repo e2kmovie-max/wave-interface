@@ -10,13 +10,14 @@ import {
   type TgLinkTokenData,
 } from "@/lib/wave-interface";
 import { exchangeCodeForProfile, parseGoogleAuthState } from "@/lib/google-oauth";
+import { publicUrl } from "@/lib/public-url";
 import { writeSession } from "@/lib/session";
 
 export const runtime = "nodejs";
 
 export async function GET(req: NextRequest) {
   if (!isGoogleOAuthConfigured()) {
-    return NextResponse.redirect(new URL("/login?error=google_disabled", req.url));
+    return NextResponse.redirect(publicUrl("/login?error=google_disabled", req));
   }
 
   const code = req.nextUrl.searchParams.get("code");
@@ -24,16 +25,16 @@ export async function GET(req: NextRequest) {
   const errorParam = req.nextUrl.searchParams.get("error");
   if (errorParam) {
     return NextResponse.redirect(
-      new URL(`/login?error=${encodeURIComponent(errorParam)}`, req.url),
+      publicUrl(`/login?error=${encodeURIComponent(errorParam)}`, req),
     );
   }
   if (!code) {
-    return NextResponse.redirect(new URL("/login?error=missing_code", req.url));
+    return NextResponse.redirect(publicUrl("/login?error=missing_code", req));
   }
 
   const state = parseGoogleAuthState(stateToken);
   if (!state) {
-    return NextResponse.redirect(new URL("/login?error=invalid_state", req.url));
+    return NextResponse.redirect(publicUrl("/login?error=invalid_state", req));
   }
 
   let profile;
@@ -41,7 +42,7 @@ export async function GET(req: NextRequest) {
     profile = await exchangeCodeForProfile(code);
   } catch (e) {
     console.error("[google callback] exchange failed", e);
-    return NextResponse.redirect(new URL("/login?error=oauth_failed", req.url));
+    return NextResponse.redirect(publicUrl("/login?error=oauth_failed", req));
   }
 
   await connectMongo();
@@ -62,7 +63,7 @@ export async function GET(req: NextRequest) {
     const tgData = verifyTgLinkToken(state.tgLink);
     if (!tgData) {
       return NextResponse.redirect(
-        new URL("/tg-auth/error?reason=expired", req.url),
+        publicUrl("/tg-auth/error?reason=expired", req),
       );
     }
 
@@ -74,7 +75,7 @@ export async function GET(req: NextRequest) {
       String(existingByGoogle._id) !== String(existingByTg._id)
     ) {
       return NextResponse.redirect(
-        new URL("/tg-auth/error?reason=already_linked", req.url),
+        publicUrl("/tg-auth/error?reason=already_linked", req),
       );
     }
     if (existingByGoogle && !existingByTg) {
@@ -93,7 +94,7 @@ export async function GET(req: NextRequest) {
       );
       await finalizeTgLinkSuccess(String(updated!._id), tgData, profile.email);
       return NextResponse.redirect(
-        new URL("/tg-auth/done?linked=google", req.url),
+        publicUrl("/tg-auth/done?linked=google", req),
       );
     }
 
@@ -112,7 +113,7 @@ export async function GET(req: NextRequest) {
       { upsert: true, new: true, setDefaultsOnInsert: true },
     );
     await finalizeTgLinkSuccess(String(merged._id), tgData, profile.email);
-    return NextResponse.redirect(new URL("/tg-auth/done?linked=google", req.url));
+    return NextResponse.redirect(publicUrl("/tg-auth/done?linked=google", req));
   }
 
   // ------------------------------------------------------------------
@@ -123,14 +124,14 @@ export async function GET(req: NextRequest) {
     const existingByGoogle = await User.findOne({ googleId: profile.sub });
     if (existingByGoogle && String(existingByGoogle._id) !== state.linkUid) {
       return NextResponse.redirect(
-        new URL("/account?error=google_already_linked", req.url),
+        publicUrl("/account?error=google_already_linked", req),
       );
     }
     const updated = await User.findByIdAndUpdate(state.linkUid, googleUpdate, {
       new: true,
     });
     if (!updated) {
-      return NextResponse.redirect(new URL("/login?error=session_expired", req.url));
+      return NextResponse.redirect(publicUrl("/login?error=session_expired", req));
     }
     userId = String(updated._id);
   } else {
@@ -144,7 +145,7 @@ export async function GET(req: NextRequest) {
 
   await writeSession({ uid: userId });
   const next = state.next && state.next.startsWith("/") ? state.next : "/";
-  return NextResponse.redirect(new URL(next, req.url));
+  return NextResponse.redirect(publicUrl(next, req));
 }
 
 /**
